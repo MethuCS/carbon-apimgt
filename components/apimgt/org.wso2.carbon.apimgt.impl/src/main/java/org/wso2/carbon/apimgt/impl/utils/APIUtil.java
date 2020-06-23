@@ -10996,7 +10996,6 @@ public final class APIUtil {
             String sType = ((JSONObject) types).get(ContainerBasedConstants.SYSTEM_TYPE).toString();
             String displayName = ((JSONObject) types).get(ContainerBasedConstants.DISPLAY_NAME).toString();
             ServiceDiscoveryConfigurations serviceConfObj = new ServiceDiscoveryConfigurations();
-            ServiceDiscoveryConf implParametersObj = new ServiceDiscoveryConf();
 
             serviceConfObj.setType(sType);
             if(type.equalsIgnoreCase(sType)){
@@ -11008,14 +11007,7 @@ public final class APIUtil {
                     String value = implParametersJsonObj.get(key).toString();
                     implParametersMap.put(key, value);
                 }
-                String saToken = implParametersMap.get("SAToken").toString();
-                String url = (String) implParametersMap.get("MasterURL");
-                String masterURL = url.replaceAll("\u200B", "");
-
-                implParametersObj.setSaToken(saToken);
-                implParametersObj.setMasterURL(masterURL);
-
-                serviceConfObj.setImplParameters(implParametersObj);
+                serviceConfObj.setImplParameters(implParametersMap);
                 serviceDiscoveryConfMap.put(sType, serviceConfObj);
             }
         }
@@ -11030,7 +11022,6 @@ public final class APIUtil {
      */
 public static  Map<String, ServiceDiscoveryConfigurations> getServiceDiscoveryConfigurationFromXML(String type){
     ServiceDiscoveryConfigurations serviceConfObj = new ServiceDiscoveryConfigurations();
-    ServiceDiscoveryConf implParametersObj = new ServiceDiscoveryConf();
 
     JSONArray serviceDiscovery;
     APIManagerConfiguration configuration = ServiceReferenceHolder.getInstance().getAPIManagerConfigurationService()
@@ -11049,19 +11040,12 @@ public static  Map<String, ServiceDiscoveryConfigurations> getServiceDiscoveryCo
 
                 Map<String, Object>  impl = (Map<String, Object>) serviceDiscoveryConfig.get("ImplParameters");
 
-                String saToken = (String)impl.get("SAToken");
-                String masterURL = (String)impl.get("MasterURL");
-
-                implParametersObj.setSaToken(saToken);
-                implParametersObj.setMasterURL(masterURL);
-
                 serviceConfObj.setType(sType);
                 serviceConfObj.setClassName(className);
                 serviceConfObj.setDisplayName(displayName);
-                serviceConfObj.setImplParameters(implParametersObj);
+                serviceConfObj.setImplParameters(impl);
 
                 serviceDiscoveryConfMap.put(sType,serviceConfObj);
-
             }
     }
     return serviceDiscoveryConfMap;
@@ -11075,7 +11059,7 @@ public static  Map<String, ServiceDiscoveryConfigurations> getServiceDiscoveryCo
      */
     public static  Map<String, ServiceDiscoveryConfigurations> getServiceDiscoveryConfiguration
     ( String tenantDomain, String type) throws  UserStoreException, RegistryException, ParseException {
-        Map<String, ServiceDiscoveryConfigurations> serviceDiscoveryConfMap = new HashMap<>();
+        Map<String, ServiceDiscoveryConfigurations> serviceDiscoveryConfMap;
 
         if (tenantDomain.equals(MultitenantConstants.SUPER_TENANT_DOMAIN_NAME)) {
             serviceDiscoveryConfMap = APIUtil.getServiceDiscoveryConfigurationFromXML(type);
@@ -11100,7 +11084,7 @@ public static  Map<String, ServiceDiscoveryConfigurations> getServiceDiscoveryCo
      */
     public static  List<String> getTypesServiceDiscoveryConfiguration ( String tenantDomain) throws
             UserStoreException, RegistryException, ParseException {
-        List <String> types = new ArrayList<>();
+        List <String> types;
 
         if (tenantDomain.equals(MultitenantConstants.SUPER_TENANT_DOMAIN_NAME)) {
             types = APIUtil.getTypesOfServiceDiscoveryConfigurationFromXML();
@@ -11125,9 +11109,9 @@ public static  Map<String, ServiceDiscoveryConfigurations> getServiceDiscoveryCo
      * @return class object
      */
     public static ServiceDiscovery generateClassObject(String type) throws UserStoreException, RegistryException,
-            ParseException, APIManagementException, ClassNotFoundException, IllegalAccessException,
+            ParseException,  ClassNotFoundException, IllegalAccessException,
             InstantiationException {
-        Map<String, ServiceDiscoveryConfigurations> serviceDiscoveryConfMap = new HashMap<>();
+        Map<String, ServiceDiscoveryConfigurations> serviceDiscoveryConfMap;
         serviceDiscoveryConfMap = APIUtil.getServiceDiscoveryConfiguration("carbon.super",type);
         for(Map.Entry mapElement :serviceDiscoveryConfMap.entrySet() ) {
             ServiceDiscoveryConfigurations confi = (ServiceDiscoveryConfigurations) mapElement.getValue();
@@ -11152,7 +11136,7 @@ public static  Map<String, ServiceDiscoveryConfigurations> getServiceDiscoveryCo
                 .getAPIManagerConfiguration();
         serviceDiscovery= configuration.getServiceDiscoveryConf();
 
-        Map<String, Object> serviceDiscoveryConfig = null;
+        Map<String, Object> serviceDiscoveryConfig;
         List <String> types = new ArrayList<>();
         for (int i = 0; i < serviceDiscovery.size(); i++){
             serviceDiscoveryConfig = new ObjectMapper().convertValue(serviceDiscovery.get(i),
